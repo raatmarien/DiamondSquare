@@ -22,3 +22,7 @@ tempRender : diamondsquare
 render : diamondsquare
 	./diamondsquare
 	eog heightmap.png 
+
+renderTex: diamondsquare
+	./diamondsquare heightmap.png t
+	eog atexture.png heightmap.png

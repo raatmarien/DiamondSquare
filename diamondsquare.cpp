@@ -54,6 +54,8 @@ int main(int argc, char **argv) {
     double *map = generateMap(size, 0.9);
     normalizeValues(map, size * size);
     drawValues(map, size, size, filename); 
+    if (argc > 2 && argv[2][0] == 't')
+        drawTexture(map, size, size, "atexture.png");
     return 0;
 }
 
