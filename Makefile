@@ -10,6 +10,10 @@ diamondsquare : diamondsquare.o lodepng.o
 diamondsquare.o : diamondsquare.cpp
 	g++ -c diamondsquare.cpp $(CFLAG)
 
+
+heightToMap : heightToMap.o
+	g++ -o heightToMap heightToMap.o -lsfml-graphics -lsfml-system
+
 .PHONY : clean tempRender render
 clean : 
 	rm diamondsquare diamondsquare.o lodepng.o

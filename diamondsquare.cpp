@@ -32,15 +32,27 @@ struct PassSettings {
     int mapSize; // Size of each side of the map
 };
 
+struct TextureSettings {
+    double water;
+    double sand;
+    double grass;
+    double forest;
+    double stone;
+};
+
 void drawValues(double *values, unsigned width, unsigned height, const char *filename);
-void drawTexture(double *values, unsigned width, unsigned height, const char *filename);
-int *getTextureRgb(double value);
+void drawTexture(double *values, unsigned width, unsigned height, const char *filename
+                 , TextureSettings *textureSettings);
+int *getTextureRgb(double value, TextureSettings *textureSettings);
 void normalizeValues(double *values, int size);
 double* generateMap(
     int size, // Size of the square, should be a power of 2 plus 1
-    double h // The displacement will be decreased by 2 ^ (- h) each pass
-             // A high h-value will result in a smooth map and a low h-value
-             // will result in a rough map
+    double h, // The displacement will be decreased by 2 ^ (- h) each pass
+              // A high h-value will result in a smooth map and a low h-value
+              // will result in a rough map
+    double *map, // The array of doubles to fill
+    int startPassSize // The pass size to start with, usefull for doing the first few
+                      // passes manually
     ); // Returns a pointer to an array of the length size * size
 void passDiamondSquare(PassSettings *settings);
 void diamond(int x, int y, PassSettings *settings);
@@ -51,11 +63,57 @@ double drand(); // Returns a double between -1 and 1
 int main(int argc, char **argv) {
     const char *filename = argc > 1 ? argv[1] : "heightmap.png";
     int size = 1025;
-    double *map = generateMap(size, 0.9);
+    double *map = new double[size * size];
+    for (int i = 0; i < size * size; i++) map[i] = 0.0;
+    int startPassSize = size - 1;
+    double h = 0.8;
+
+    TextureSettings textureSettings;
+    textureSettings.water = 0.25;
+    textureSettings.sand = 0.3;
+    textureSettings.grass = 0.5;
+    textureSettings.forest = 0.7;
+    textureSettings.stone = 0.9;
+
+    if ((argc == 3 && argv[2][0] == 'i')
+        || (argc > 3 && argv[3][0] == 'i')) {
+        double cornerValue = -5.0;
+        startPassSize /= 2;
+        h = 0.5;
+        for (int x = 0; x < size; x++) {
+            map[x] = cornerValue;
+            map[x + size * (size - 1)] = cornerValue;
+        }
+        for (int y = 0; y < size; y++) {
+            map[y * size] = cornerValue;
+            map[y * size + size - 1] = cornerValue;
+        }
+    }
+    if ((argc == 3 && argv[2][0] == 'a')
+        || (argc > 3 && argv[3][0] == 'a')) {
+        double cornerValue = -1.0;
+        startPassSize /= 8;
+        h = 0.5;
+        for (int x = 0; x < size; x++) {
+            map[x] = cornerValue;
+            map[x + size * (size - 1)] = cornerValue;
+        }
+        for (int y = 0; y < size; y++) {
+            map[y * size] = cornerValue;
+            map[y * size + size - 1] = cornerValue;
+        }
+        
+        textureSettings.water = 0.65;
+        textureSettings.sand = 0.675;
+        textureSettings.grass = 0.75;
+        textureSettings.forest = 0.825;
+        textureSettings.stone = 0.925;
+    }
+    generateMap(size, h, map, startPassSize);
     normalizeValues(map, size * size);
     drawValues(map, size, size, filename); 
     if (argc > 2 && argv[2][0] == 't')
-        drawTexture(map, size, size, "atexture.png");
+        drawTexture(map, size, size, "atexture.png", &textureSettings);
     return 0;
 }
 
@@ -74,12 +132,13 @@ void drawValues(double *values, unsigned width, unsigned height, const char *fil
     lodepng::encode(filename, image, width, height);
 }
 
-void drawTexture(double *values, unsigned width, unsigned height, const char *filename) {
+void drawTexture(double *values, unsigned width, unsigned height, const char *filename
+                 , TextureSettings *textureSettings) {
     std::vector<unsigned char> image;
     image.resize(width * height * 4);
     for (int x = 0; x < width; x++) {
         for (int y = 0; y < height; y++) {
-            int *rgb = getTextureRgb(values[width * y + x]);
+            int *rgb = getTextureRgb(values[width * y + x], textureSettings);
             image[4 * width * y + 4 * x + 0] = rgb[0];
             image[4 * width * y + 4 * x + 1] = rgb[1];
             image[4 * width * y + 4 * x + 2] = rgb[2];
@@ -89,25 +148,25 @@ void drawTexture(double *values, unsigned width, unsigned height, const char *fi
     lodepng::encode(filename, image, width, height);
 }
 
-int *getTextureRgb(double value) {
+int *getTextureRgb(double value, TextureSettings *settings) {
     int *rgb = new int[3];
-    if (value < 0.25) {
+    if (value < settings->water) {
         rgb[0] = 0;
         rgb[1] = 0;
         rgb[2] = 220;
-    } else if (value < 0.3) {
+    } else if (value < settings->sand) {
         rgb[0] = 210;
         rgb[1] = 210;
         rgb[2] = 10;
-    } else if (value < 0.4) {
+    } else if (value < settings->grass) {
         rgb[0] = 0;
         rgb[1] = 205;
         rgb[2] = 0;
-    } else if (value < 0.6) {
+    } else if (value < settings->forest) {
         rgb[0] = 0;
         rgb[1] = 100;
         rgb[2] = 0;
-    } else if (value < 0.8) {
+    } else if (value < settings->stone) {
         rgb[0] = 120;
         rgb[1] = 120;
         rgb[2] = 120;
@@ -133,14 +192,11 @@ void normalizeValues(double *values, int size) {
     }
 }
 
-double* generateMap(int size, double h) {
-    double *map = new double[size * size];
-    double initialValue = 0.0;
-    for (int i = 0; i < size * size; i++) map[i] = initialValue;
+double* generateMap(int size, double h, double *map, int passSize) {
     PassSettings settings;
     settings.map = map;
     settings.displacementModifier = 1.0;
-    settings.passSize = size - 1;
+    settings.passSize = passSize;
     settings.mapSize = size;
     while (settings.passSize > 1) {
         std::cout << settings.passSize << "\n";
