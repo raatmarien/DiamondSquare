@@ -27,6 +27,14 @@ render : diamondsquare
 	./diamondsquare
 	eog heightmap.png 
 
-renderTex: diamondsquare
+land: diamondsquare
 	./diamondsquare heightmap.png t
+	eog atexture.png heightmap.png
+
+island: diamondsquare
+	./diamondsquare heightmap.png t i
+	eog atexture.png heightmap.png
+
+archipelago: diamondsquare
+	./diamondsquare heightmap.png t a
 	eog atexture.png heightmap.png
