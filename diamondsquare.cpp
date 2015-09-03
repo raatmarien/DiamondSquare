@@ -103,8 +103,8 @@ int main(int argc, char **argv) {
             map[y * size + size - 1] = cornerValue;
         }
         
-        textureSettings.water = 0.65;
-        textureSettings.sand = 0.675;
+        textureSettings.water = 0.675;
+        textureSettings.sand = 0.7;
         textureSettings.grass = 0.75;
         textureSettings.forest = 0.825;
         textureSettings.stone = 0.925;
