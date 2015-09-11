@@ -22,7 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 std::random_device randomD;
 std::mt19937 mt(randomD());
-std::uniform_real_distribution<double> dist(-1.0, 1.0);
+std::normal_distribution<double> dist(-0.0, 1.0);
 
 struct PassSettings {
     double *map; // Map to run the pass on
@@ -69,17 +69,17 @@ int main(int argc, char **argv) {
     double h = 0.8;
 
     TextureSettings textureSettings;
-    textureSettings.water = 0.25;
-    textureSettings.sand = 0.3;
-    textureSettings.grass = 0.5;
+    textureSettings.water = 0.4;
+    textureSettings.sand = 0.45;
+    textureSettings.grass = 0.55;
     textureSettings.forest = 0.7;
     textureSettings.stone = 0.9;
 
     if ((argc == 3 && argv[2][0] == 'i')
         || (argc > 3 && argv[3][0] == 'i')) {
-        double cornerValue = -5.0;
+        double cornerValue = -7.0;
         startPassSize /= 2;
-        h = 0.5;
+        h = 0.45;
         for (int x = 0; x < size; x++) {
             map[x] = cornerValue;
             map[x + size * (size - 1)] = cornerValue;
@@ -103,7 +103,7 @@ int main(int argc, char **argv) {
             map[y * size + size - 1] = cornerValue;
         }
         
-        textureSettings.water = 0.675;
+        textureSettings.water = 0.625;
         textureSettings.sand = 0.7;
         textureSettings.grass = 0.75;
         textureSettings.forest = 0.825;
@@ -114,6 +114,7 @@ int main(int argc, char **argv) {
     drawValues(map, size, size, filename); 
     if (argc > 2 && argv[2][0] == 't')
         drawTexture(map, size, size, "atexture.png", &textureSettings);
+    std::cout << filename << "\n" << "atexture.png" << "\n";
     return 0;
 }
 
@@ -199,7 +200,7 @@ double* generateMap(int size, double h, double *map, int passSize) {
     settings.passSize = passSize;
     settings.mapSize = size;
     while (settings.passSize > 1) {
-        std::cout << settings.passSize << "\n";
+        // std::cout << settings.passSize << "\n";
         passDiamondSquare(&settings);
         settings.passSize /= 2;
         settings.displacementModifier *= pow(2.0, -1.0 * h);
